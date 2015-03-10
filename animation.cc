@@ -23,7 +23,7 @@ using namespace std;
 void displayCallback(GLFWwindow*);
 
 /* define global variables here */
-Wheel *wheel;
+Arm *wheel;
 Arm* swingarm;
 Cylinder* spot;
 Sphere sphere;
@@ -79,7 +79,7 @@ void updateCoordFrames()
     if (is_anim_running) {
         delta = (current - last_timestamp);
         wheel_angle = WHEEL_SPEED * delta;
-        wheel_cf *= glm::rotate(glm::radians(swing_angle), glm::vec3{0.0f, 0.0f, 1.0f});
+        wheel_cf *= glm::rotate(glm::radians(swing_angle), glm::vec3{0.0f, 1.0f, 0.0f});
 
         /* use the pendulum equation to calculate its angle */
         swing_time += delta * 3;
@@ -238,7 +238,7 @@ void myModelInit ()
     swingarm = new Arm;
     swingarm->build();
 
-    wheel = new Wheel();
+    wheel = new Arm();
     wheel->build();
     wheel_cf = glm::translate(glm::vec3{0.0f, 0.0f, -swingarm->length()});
     //wheel_cf *= glm::rotate(glm::radians(45.0f), glm::vec3{1,0,0});
