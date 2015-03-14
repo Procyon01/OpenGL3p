@@ -16,34 +16,7 @@ void SwingFrame::render() const {
     glMaterialf(GL_FRONT, GL_SHININESS, 12.8);
     glPushMatrix();
     glRotatef (90, 1, 0, 0);
-    glScalef (1, 1, 20);
+    glScalef (1.75, 1.75, 10);
     pipe.render();
     glPopMatrix();
-
-    glPushMatrix();
-    glRotatef (90, 0, 1, 0);
-    glRotatef (90, 0, 0, 1);
-    glTranslatef (10, -2, 0);
-    elbow.render();
-    glPopMatrix();
-
-    glPushMatrix();
-    glRotatef (90, 0, 1, 0);
-    glRotatef (180, 0, 0, 1);
-    glTranslatef (-2, 10, 0);
-    elbow.render();
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef (0, -12, -13.5);
-    glScalef (1, 1, 23);
-    pipe.render();
-    glPopMatrix();
-
-    glPushMatrix();
-    glTranslatef (0, 12, -13.5);
-    glScalef (1, 1, 23);
-    pipe.render();
-    glPopMatrix();
-
 };

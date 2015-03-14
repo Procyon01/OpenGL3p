@@ -16,8 +16,8 @@ class Arm  {
 public:
     Arm();
     ~Arm();
-    void build();
-    void render() const;
+    void build(bool, int);
+    void render(bool) const;
     float length() const;
 private:
     Cylinder cyl;

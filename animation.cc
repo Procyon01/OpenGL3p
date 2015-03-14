@@ -23,13 +23,15 @@ using namespace std;
 void displayCallback(GLFWwindow*);
 
 /* define global variables here */
-Arm *wheel;
-Arm* swingarm;
+Arm *shin;
+Arm* hip;
 Cylinder* spot;
+Cylinder* torso;
 Sphere sphere;
 SwingFrame frame;
 
-glm::mat4 wheel_cf;
+glm::mat4 hand_cf;
+glm::mat4 shin_cf;
 glm::mat4 swing_arm_cf, frame_cf;
 glm::mat4 camera_cf, light1_cf, light0_cf;
 glm::mat4 *active;
@@ -69,31 +71,36 @@ void updateCoordFrames()
     static double last_timestamp = 0;
     static float swing_time = 0;
     static float swing_angle = 0;
-    static float wheel_angle = 0;
+    static float shin_angle = 0;
     static int deg = 0;
     const float WHEEL_SPEED = 72; /* in degrees per second */
     float delta, current;
 
 
     current = glfwGetTime();
-    if (is_anim_running) {
+
+	//ANIMATE!
+	if (is_anim_running) {
         delta = (current - last_timestamp);
-        wheel_angle = WHEEL_SPEED * delta;
-        wheel_cf *= glm::rotate(glm::radians(swing_angle), glm::vec3{0.0f, 1.0f, 0.0f});
 
         /* use the pendulum equation to calculate its angle */
         swing_time += delta * 3;
-        float angle = INIT_SWING_ANGLE *
-                cos(swing_time * sqrt(GRAVITY / swingarm->length()));
-        swing_arm_cf *= glm::rotate(glm::radians(angle - swing_angle), glm::vec3{0.0f, 1.0f, 0.0f});
-        swing_angle = angle;
-    }
+        float angle = INIT_SWING_ANGLE * cos(swing_time * sqrt(GRAVITY / hip->length()));
+        
+		swing_arm_cf *= glm::rotate(glm::radians(angle - swing_angle), glm::vec3{0.0f, 1.0f, 0.0f});
+		
+        shin_cf *= glm::rotate(glm::radians(angle - shin_angle), glm::vec3{0.0f, 1.0f, 0.0f});
+		
+		shin_angle = angle;
+		swing_angle = angle;
+	
+	}
     last_timestamp = current;
 }
 
 void myGLInit ()
 {
-    glClearColor (0.0, 0.0, 0.0, 1.0); /* black background */
+    glClearColor (1.0, 1.0, 1.0, 1.0); /* black background */
 
     /* fill front-facing polygon */
     glPolygonMode (GL_FRONT, GL_FILL);
@@ -203,45 +210,98 @@ void displayCallback (GLFWwindow *win)
      * way to render different object w.r.t other coordinate
      * frame.
      *
-     * The swingarm is rendered w.r.t the swing base frame
-     * The wheel is rendered w.r.t the swing arm frame
+     * The hip is rendered w.r.t the swing base frame
+     * The shin is rendered w.r.t the swing arm frame
      */
-    glPushMatrix();
-    {
-        glMultMatrixf(glm::value_ptr(frame_cf));
-        frame.render();
-        glPushMatrix();
-        {
-            glMultMatrixf(glm::value_ptr(swing_arm_cf));
-            swingarm->render();
-            glPushMatrix();
-            {
-                glMultMatrixf(glm::value_ptr(wheel_cf));
-                wheel->render();
-            }
-            glPopMatrix();
 
+	/* Testing body build */
+	glPushMatrix();
+	{
+		glMultMatrixf(glm::value_ptr(frame_cf));
+        frame.render();
+		glTranslatef(0, 0, -4.5);
+		torso -> render();	
+	}
+	glPopMatrix();
+
+	/* render left arm */
+	glPushMatrix();
+    {
+		//shoulders
+		glMultMatrixf(glm::value_ptr(frame_cf));
+        glPushMatrix();
+        {	
+        	glTranslatef(0, -5, 0);
+			//shoulder sphere
+			sphere.render();
+			glMultMatrixf(glm::value_ptr(swing_arm_cf));
+            glTranslatef(0, 0, -4);
+			//upper arm
+            hip->render(false);
+            //glPushMatrix();
+            //{
+                glTranslatef(0, 0, 4);
+				glMultMatrixf(glm::value_ptr(shin_cf));
+				shin->render(true);
+				sphere.render();
+				glTranslatef(0, 0, -8);
+				sphere.render();
+            //}
+            //glPopMatrix();
         }
         glPopMatrix();
     }
     glPopMatrix();
-    /* to make smooth transition between frame */
+
+	/* render right arm */
+	glPushMatrix();
+    {
+		//shoulders
+		glMultMatrixf(glm::value_ptr(frame_cf));
+        glPushMatrix();
+        {	
+        	glTranslatef(0, 5, 0);
+			//shoulder sphere
+			sphere.render();
+			glMultMatrixf(glm::value_ptr(swing_arm_cf));
+            glTranslatef(0, 0, -4);
+			//upper arm
+            hip->render(false);
+            //glPushMatrix();
+            //{
+                glTranslatef(0, 0, 4);
+				glMultMatrixf(glm::value_ptr(shin_cf));
+				shin->render(true);
+				sphere.render();
+				glTranslatef(0, 0, -8);
+				sphere.render();
+            //}
+            //glPopMatrix();
+        }
+        glPopMatrix();
+    }
+    glPopMatrix();
+
+	/* to make smooth transition between frame */
     glfwSwapBuffers(win);
 }
 
 void myModelInit ()
 {
-    sphere.build(15, 20);
+    torso = new Cylinder();
+	torso -> build(4, 3.5, 10);
+	
+	sphere.build(15, 20);
     spot = new Cylinder();
     spot -> build(1 + tan(glm::radians(40.0f)), 1, 2);
 
-    swingarm = new Arm;
-    swingarm->build();
+    hip = new Arm;
+    hip->build(false, 7);
 
-    wheel = new Arm();
-    wheel->build();
-    wheel_cf = glm::translate(glm::vec3{0.0f, 0.0f, -swingarm->length()});
-    //wheel_cf *= glm::rotate(glm::radians(45.0f), glm::vec3{1,0,0});
+    shin = new Arm();
+    shin->build(true, 7);
+    shin_cf = glm::translate(glm::vec3{0.0f, 0.0f, -hip->length()});
+    shin_cf *= glm::rotate(glm::radians(30.0f), glm::vec3{0,1,0});
 
     frame.build();
     frame_cf = glm::translate(glm::vec3{0, 0 , 25});
@@ -271,11 +331,11 @@ void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods)
             case GLFW_KEY_RIGHT: /* pan right */
                 *active *= glm::rotate(glm::radians(+3.0f), glm::vec3{0.0f, 1.0f, 0.0f});
                 break;
-            case GLFW_KEY_X:
+            case GLFW_KEY_W:
                 *active *= glm::translate(glm::vec3{1, 0, 0});
                 break;
-            case GLFW_KEY_Y:
-                *active *= glm::translate(glm::vec3{0, 1, 0});
+            case GLFW_KEY_S:
+                *active *= glm::translate(glm::vec3{-1, 0, 0});
                 break;
             case GLFW_KEY_Z:
                 *active *= glm::translate(glm::vec3{0, 0, 1});

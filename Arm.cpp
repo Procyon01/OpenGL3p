@@ -7,7 +7,7 @@
 
 #include "Cylinder.h"
 #include "Arm.h"
-const float LENGTH = 10;
+const float LENGTH = 8;
 Arm::Arm()
 {
 
@@ -18,18 +18,24 @@ Arm::~Arm()
     //gluDeleteQuadric(cyl_quad);
 }
 
-void Arm::build()
+void Arm::build(bool extrem, int len)
 {
-    cyl.build(0.5, 0.5, LENGTH);
+	if (extrem){		
+    	cyl.build(0.9, 0.6, len);
+	} else {
+		cyl.build(1.0, 0.9, len);
+	}
     //gluCylinder(cyl_quad, 0.2, 0.2, LENGTH, 20, 25);
     //glEndList();
 }
 
-void Arm::render() const
+void Arm::render(bool extrem) const
 {
     glPushMatrix();
-    glTranslatef (0, 0, -LENGTH/2);
     glPushMatrix();
+	if (extrem){
+		glTranslatef(0, 0, -4);
+	}
     cyl.render();
     glPopMatrix();
 }
