@@ -7,6 +7,7 @@
  * mccartty@mail.gvsu.edu
  * fallertc@mail.gvsu.edu
  */
+#include <unistd.h>
 #include <GL/glew.h>
 #include <sys/time.h>
 #include <math.h>
@@ -33,6 +34,8 @@ Cylinder* torso;
 Sphere sphere;
 SwingFrame frame;
 
+int SPEED_MODE = 3;
+
 glm::mat4 forearm_cf, r_forearm_cf, l_forearm_cf;    
 glm::mat4 upperarm_cf, r_upperarm_cf, l_upperarm_cf; 
 glm::mat4 frame_cf;
@@ -41,7 +44,7 @@ glm::mat4 *active;
 
 const float INIT_SWING_ANGLE = 35.0f; /* degrees */
 const float GRAVITY = 9.8;   /* m/sec^2 */
-bool is_anim_running = true;
+bool is_anim_running = false;
 
 /* light source setting */
 GLfloat light0_color[] = {1.0, 1.0, 1.0, 1.0};   /* color */
@@ -100,7 +103,7 @@ void updateCoordFrames()
         delta = (current - last_timestamp);
 
         /* use the pendulum equation to calculate its angle */
-        swing_time += delta * 3;
+        swing_time += delta * SPEED_MODE;
         float r_angle = INIT_SWING_ANGLE * cos(swing_time * sqrt(GRAVITY / upperarm->length()));
         float l_angle = INIT_SWING_ANGLE * -cos(swing_time * sqrt(GRAVITY / upperarm->length()));
 		
@@ -198,14 +201,60 @@ void displayCallback (GLFWwindow *win)
      * The forearm is rendered w.r.t the swing arm frame
      */
 
-	/* Testing body build */
+	/* Begin body build */
 	glPushMatrix();
 	{
 		glMultMatrixf(glm::value_ptr(frame_cf));
         frame.render();
+		glPushMatrix();
+		{
+			glScalef(2, 2, 2.5);
+			glTranslatef(0, 0, 0.5);
+			sphere.render();
+    		glLightfv (GL_LIGHT0, GL_POSITION, glm::value_ptr(glm::column(light0_cf, 3)));
+
+		}
+		glPopMatrix();
 		glTranslatef(0, 0, -4.0);
-		glScalef(0.5, 1, 1);
+		glScalef(0.75, 1, 1);
+		torso -> render();
+		glTranslatef(0, 0, -6.0);
+		glRotatef(180.0, 0, 1, 0);
+		glScalef(1, 1, 0.33);
+		//drop in a pelvis
 		torso -> render();	
+		
+		//drop in a belt
+		glPushMatrix();
+		{
+			glTranslatef(0, 0, -5);
+			glScalef(5, 5, 5);
+			sphere.render();
+		}
+		glPopMatrix();
+	}
+	glPopMatrix();
+
+	//render left leg
+	glPushMatrix();
+	{
+		glMultMatrixf(glm::value_ptr(frame_cf));
+		glTranslatef(0, -1.75, -11.5);
+		glScalef(2.0, 2.0, 2.0);
+		sphere.render();
+		glRotatef(180, 0, 0, 1);
+		//upperarm->render(false);
+	}
+	glPopMatrix();
+
+	//render right leg
+	glPushMatrix();
+	{
+		glMultMatrixf(glm::value_ptr(frame_cf));
+		glTranslatef(0, 1.75, -11.5);
+		glScalef(2.0, 2.0, 2.0);
+		sphere.render();
+
 	}
 	glPopMatrix();
 
@@ -233,9 +282,15 @@ void displayCallback (GLFWwindow *win)
                 glTranslatef(0, 0, 4);
 				glMultMatrixf(glm::value_ptr(l_forearm_cf));
 				forearm->render(true);
+				glPushMatrix();
+				{
+				glScalef(1.5, 1.5, 1.5);
 				sphere.render();
+				}
+				glPopMatrix();
 				glTranslatef(0, 0, -8);
 				sphere.render();
+    			glLightfv (GL_LIGHT0, GL_POSITION, glm::value_ptr(glm::column(light0_cf, 3)));
             //}
             //glPopMatrix();
         }
@@ -270,6 +325,7 @@ void displayCallback (GLFWwindow *win)
 				sphere.render();
 				glTranslatef(0, 0, -8);
 				sphere.render();
+    			glLightfv (GL_LIGHT0, GL_POSITION, glm::value_ptr(glm::column(light0_cf, 3)));
             //}
             //glPopMatrix();
         }
@@ -315,8 +371,40 @@ void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods)
     else {
         switch (key) {
 			case GLFW_KEY_W:
+				frame_cf *= glm::translate(glm::vec3(-SPEED_MODE/2, 0.0f, 0.0f));
+				is_anim_running = true;
+				break;
+			case GLFW_KEY_S:
 				frame_cf *= glm::translate(glm::vec3(1.0f, 0.0f, 0.0f));
-            case GLFW_KEY_ESCAPE:
+				break;
+			case GLFW_KEY_A:
+				frame_cf *= glm::rotate(glm::radians(3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				break;
+			case GLFW_KEY_D:
+				frame_cf *= glm::rotate(glm::radians(-3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+				break;
+            case GLFW_KEY_UP:
+				camera_cf *= glm::translate(glm::vec3(0, 0, 1));
+                break;
+            case GLFW_KEY_DOWN:
+				camera_cf *= glm::translate(glm::vec3(-1.0f, 0.0f, 0.0f));
+                break;
+            case GLFW_KEY_LEFT:
+                camera_cf *= glm::rotate(glm::radians(3.0f), glm::vec3{0.0f, 0.0f, 1.0f});
+                break;
+            case GLFW_KEY_RIGHT:
+                camera_cf *= glm::rotate(glm::radians(-3.0f), glm::vec3{0.0f, 0.0f, 1.0f});
+                break;
+            case GLFW_KEY_T:
+                if(SPEED_MODE == 3){
+					SPEED_MODE = 8;
+					break;
+				}
+				SPEED_MODE = 3;
+				break;
+            
+			
+			case GLFW_KEY_ESCAPE:
                 exit(0);
             case GLFW_KEY_0:
                 active = &light0_cf;
@@ -400,7 +488,7 @@ void reshapeCallback (GLFWwindow *win, int w, int h)
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
 
-    gluPerspective (60, (float) w / (float) h, 5.0, 100.0);
+    gluPerspective (60, (float) w / (float) h, 5.0, 1000.0);
 
     /* switch back to Model View matrix mode */
     glMatrixMode (GL_MODELVIEW);
