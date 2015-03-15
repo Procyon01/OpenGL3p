@@ -42,7 +42,7 @@ bool is_anim_running = true;
 
 /* light source setting */
 GLfloat light0_color[] = {1.0, 1.0, 1.0, 1.0};   /* color */
-GLfloat light1_color[] = {1.0, 1.0, 0.6, 1.0};  /* color */
+GLfloat light1_color[] = {0.1, 0.5, 0.4, 1.0};  /* color */
 GLfloat black_color[] = {0.0, 0.0, 0.0, 1.0};   /* color */
 
 /*--------------------------------*
