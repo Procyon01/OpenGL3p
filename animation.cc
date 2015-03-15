@@ -151,17 +151,23 @@ void displayCallback (GLFWwindow *win)
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
     glColor3ub (29, 100, 56);
 
-    glBegin (GL_QUADS);
-    const int GROUND_SIZE = 40;
-    glNormal3f (0.0f, 0.0f, 1.0f); /* normal vector for the ground */
-    glVertex2i (GROUND_SIZE, GROUND_SIZE);
-    glNormal3f (0.0f, 0.0f, 1.0f); /* normal vector for the ground */
-    glVertex2i (-GROUND_SIZE, GROUND_SIZE);
-    glNormal3f (0.0f, 0.0f, 1.0f); /* normal vector for the ground */
-    glVertex2i (-GROUND_SIZE, -GROUND_SIZE);
-    glNormal3f (0.0f, 0.0f, 1.0f); /* normal vector for the ground */
-    glVertex2i (GROUND_SIZE, -GROUND_SIZE);
-    glEnd();
+	//draw ground with subdivisions
+    const int GROUND_SIZE = 100;
+	for (int y_count = GROUND_SIZE; y_count > -GROUND_SIZE; y_count--){
+			
+		for (int x_count = GROUND_SIZE; x_count > -GROUND_SIZE; x_count--){
+  	 		glBegin(GL_QUADS);
+			glNormal3f (0.0f, 0.0f, 1.0f); /* normal vector for the ground */
+   			glVertex2i (x_count, y_count);
+   	 		glNormal3f (0.0f, 0.0f, 1.0f); /* normal vector for the ground */
+    		glVertex2i (x_count-1, y_count);
+    		glNormal3f (0.0f, 0.0f, 1.0f); /* normal vector for the ground */
+    		glVertex2i (x_count-1, y_count-1);
+    		glNormal3f (0.0f, 0.0f, 1.0f); /* normal vector for the ground */
+    		glVertex2i (x_count, y_count-1);
+			glEnd();
+		}
+	}
     glDisable (GL_COLOR_MATERIAL);
 
     /* place the light source in the scene. */
@@ -211,8 +217,6 @@ void displayCallback (GLFWwindow *win)
 			glScalef(2, 2, 2.5);
 			glTranslatef(0, 0, 0.5);
 			sphere.render();
-    		glLightfv (GL_LIGHT0, GL_POSITION, glm::value_ptr(glm::column(light0_cf, 3)));
-
 		}
 		glPopMatrix();
 		glTranslatef(0, 0, -4.0);
@@ -284,13 +288,12 @@ void displayCallback (GLFWwindow *win)
 				forearm->render(true);
 				glPushMatrix();
 				{
-				glScalef(1.5, 1.5, 1.5);
-				sphere.render();
+					glScalef(1.5, 1.5, 1.5);
+					sphere.render();
 				}
 				glPopMatrix();
 				glTranslatef(0, 0, -8);
 				sphere.render();
-    			glLightfv (GL_LIGHT0, GL_POSITION, glm::value_ptr(glm::column(light0_cf, 3)));
             //}
             //glPopMatrix();
         }
@@ -322,10 +325,14 @@ void displayCallback (GLFWwindow *win)
                 glTranslatef(0, 0, 4);
 				glMultMatrixf(glm::value_ptr(r_forearm_cf));
 				forearm->render(true);
-				sphere.render();
+				glPushMatrix();
+				{
+					glScalef(1.5, 1.5, 1.5);
+					sphere.render();
+				}
+				glPopMatrix();
 				glTranslatef(0, 0, -8);
 				sphere.render();
-    			glLightfv (GL_LIGHT0, GL_POSITION, glm::value_ptr(glm::column(light0_cf, 3)));
             //}
             //glPopMatrix();
         }
