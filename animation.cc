@@ -1,8 +1,11 @@
 /**
- * Example of 3D object animation
+ * A wonderful tin man!
  *
- * Hans Dulimarta
- * dulimar@cis.gvsu.edu
+ * Tyler McCarthy - Models & Animation
+ * Charles Fallert - Lighting & Colors
+ * 
+ * mccartty@mail.gvsu.edu
+ * fallertc@mail.gvsu.edu
  */
 #include <GL/glew.h>
 #include <sys/time.h>
@@ -23,16 +26,16 @@ using namespace std;
 void displayCallback(GLFWwindow*);
 
 /* define global variables here */
-Arm *shin;
-Arm* hip;
+Arm* forearm;
+Arm* upperarm;
 Cylinder* spot;
 Cylinder* torso;
 Sphere sphere;
 SwingFrame frame;
 
-glm::mat4 hand_cf;
-glm::mat4 shin_cf;
-glm::mat4 swing_arm_cf, frame_cf;
+glm::mat4 forearm_cf, r_forearm_cf, l_forearm_cf;    
+glm::mat4 upperarm_cf, r_upperarm_cf, l_upperarm_cf; 
+glm::mat4 frame_cf;
 glm::mat4 camera_cf, light1_cf, light0_cf;
 glm::mat4 *active;
 
@@ -42,25 +45,39 @@ bool is_anim_running = true;
 
 /* light source setting */
 GLfloat light0_color[] = {1.0, 1.0, 1.0, 1.0};   /* color */
-GLfloat light1_color[] = {0.1, 0.5, 0.4, 1.0};  /* color */
+GLfloat light1_color[] = {1.0, 1.0, 0.6, 1.0};  /* color */
 GLfloat black_color[] = {0.0, 0.0, 0.0, 1.0};   /* color */
 
-/*--------------------------------*
- * GLUT Reshape callback function *
- *--------------------------------*/
-void reshapeCallback (GLFWwindow *win, int w, int h)
+void myModelInit ()
 {
-    glViewport (0, 0, w, h);
+    torso = new Cylinder();
+	torso -> build(4, 3.5, 10);
+	
+	sphere.build(15, 20);
+    spot = new Cylinder();
+    spot -> build(1 + tan(glm::radians(40.0f)), 1, 2);
 
-    /* switch to Projection matrix mode */
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
+    upperarm = new Arm;
+    upperarm->build(false, 7);
 
-    gluPerspective (60, (float) w / (float) h, 5.0, 100.0);
+    forearm = new Arm();
+    forearm->build(true, 7);
+    
+	r_forearm_cf = glm::translate(glm::vec3{0.0f, 0.0f, -upperarm->length()});
+	l_forearm_cf = glm::translate(glm::vec3{0.0f, 0.0f, -upperarm->length()});
+	
+	r_forearm_cf *= glm::rotate(glm::radians(30.0f), glm::vec3{0,1,0});
+    l_forearm_cf *= glm::rotate(glm::radians(30.0f), glm::vec3{0,1,0});
+    
+	frame.build();
+    frame_cf = glm::translate(glm::vec3{0, 0 , 25});
+    active = &camera_cf;
 
-    /* switch back to Model View matrix mode */
-    glMatrixMode (GL_MODELVIEW);
-    camera_cf = glm::lookAt(glm::vec3(25,20,15), glm::vec3(0,0,15), glm::vec3(0,0,1));
+
+    light0_cf = glm::translate(glm::vec3{-25, 8, 26});
+
+    light1_cf = glm::translate(glm::vec3{0, -10, 18});
+    light1_cf = light1_cf * glm::rotate (glm::radians(-120.0f), glm::vec3{1,0,0});
 }
 
 /*================================================================*
@@ -70,10 +87,9 @@ void updateCoordFrames()
 {
     static double last_timestamp = 0;
     static float swing_time = 0;
-    static float swing_angle = 0;
-    static float shin_angle = 0;
-    static int deg = 0;
-    const float WHEEL_SPEED = 72; /* in degrees per second */
+    static float r_swing_angle = 0;
+	static float l_swing_angle = 0;
+	static int deg = 0;
     float delta, current;
 
 
@@ -85,51 +101,19 @@ void updateCoordFrames()
 
         /* use the pendulum equation to calculate its angle */
         swing_time += delta * 3;
-        float angle = INIT_SWING_ANGLE * cos(swing_time * sqrt(GRAVITY / hip->length()));
-        
-		swing_arm_cf *= glm::rotate(glm::radians(angle - swing_angle), glm::vec3{0.0f, 1.0f, 0.0f});
+        float r_angle = INIT_SWING_ANGLE * cos(swing_time * sqrt(GRAVITY / upperarm->length()));
+        float l_angle = INIT_SWING_ANGLE * -cos(swing_time * sqrt(GRAVITY / upperarm->length()));
 		
-        shin_cf *= glm::rotate(glm::radians(angle - shin_angle), glm::vec3{0.0f, 1.0f, 0.0f});
+		r_upperarm_cf *= glm::rotate(glm::radians(r_angle - r_swing_angle), glm::vec3{0.0f, 1.0f, 0.0f});
+		l_upperarm_cf *= glm::rotate(glm::radians(l_angle - l_swing_angle), glm::vec3{0.0f, 1.0f, 0.0f});
 		
-		shin_angle = angle;
-		swing_angle = angle;
-	
+        r_forearm_cf *= glm::rotate(glm::radians(r_angle - r_swing_angle), glm::vec3{0.0f, 1.0f, 0.0f});
+        l_forearm_cf *= glm::rotate(glm::radians(l_angle - l_swing_angle), glm::vec3{0.0f, 1.0f, 0.0f});
+		
+		r_swing_angle = r_angle;
+		l_swing_angle = l_angle;
 	}
     last_timestamp = current;
-}
-
-void myGLInit ()
-{
-    glClearColor (1.0, 1.0, 1.0, 1.0); /* black background */
-
-    /* fill front-facing polygon */
-    glPolygonMode (GL_FRONT, GL_FILL);
-    /* draw outline of back-facing polygon */
-    glPolygonMode (GL_BACK, GL_LINE);
-
-    /* Enable depth test for hidden surface removal */
-    glEnable (GL_DEPTH_TEST);
-
-    /* enable back-face culling */
-    glEnable (GL_CULL_FACE);
-    //glCullFace (GL_BACK);
-
-    /* Enable shading */
-    glEnable (GL_LIGHTING);
-    glEnable (GL_NORMALIZE); /* Tell OpenGL to renormalize normal vector
-                              after transformation */
-    /* initialize two light sources */
-    glEnable (GL_LIGHT0);
-    glLightfv (GL_LIGHT0, GL_AMBIENT, light0_color);
-    glLightfv (GL_LIGHT0, GL_DIFFUSE, light0_color);
-    glLightfv (GL_LIGHT0, GL_SPECULAR, light0_color);
-    glEnable (GL_LIGHT1);
-    glLightfv (GL_LIGHT1, GL_AMBIENT, light1_color);
-    glLightfv (GL_LIGHT1, GL_DIFFUSE, light1_color);
-    glLightfv (GL_LIGHT1, GL_SPECULAR, light1_color);
-    glLightf (GL_LIGHT1, GL_SPOT_CUTOFF, 40);
-
-    glEnableClientState(GL_VERTEX_ARRAY);
 }
 
 /*--------------------------------*
@@ -210,8 +194,8 @@ void displayCallback (GLFWwindow *win)
      * way to render different object w.r.t other coordinate
      * frame.
      *
-     * The hip is rendered w.r.t the swing base frame
-     * The shin is rendered w.r.t the swing arm frame
+     * The upperarm is rendered w.r.t the swing base frame
+     * The forearm is rendered w.r.t the swing arm frame
      */
 
 	/* Testing body build */
@@ -219,7 +203,8 @@ void displayCallback (GLFWwindow *win)
 	{
 		glMultMatrixf(glm::value_ptr(frame_cf));
         frame.render();
-		glTranslatef(0, 0, -4.5);
+		glTranslatef(0, 0, -4.0);
+		glScalef(0.5, 1, 1);
 		torso -> render();	
 	}
 	glPopMatrix();
@@ -227,22 +212,27 @@ void displayCallback (GLFWwindow *win)
 	/* render left arm */
 	glPushMatrix();
     {
-		//shoulders
 		glMultMatrixf(glm::value_ptr(frame_cf));
         glPushMatrix();
         {	
         	glTranslatef(0, -5, 0);
+			
 			//shoulder sphere
-			sphere.render();
-			glMultMatrixf(glm::value_ptr(swing_arm_cf));
+			glPushMatrix();{
+				glScalef(1.5, 1.5, 1.5);
+				sphere.render();
+			}
+			glPopMatrix();
+
+			glMultMatrixf(glm::value_ptr(l_upperarm_cf));
             glTranslatef(0, 0, -4);
 			//upper arm
-            hip->render(false);
+            upperarm->render(false);
             //glPushMatrix();
             //{
                 glTranslatef(0, 0, 4);
-				glMultMatrixf(glm::value_ptr(shin_cf));
-				shin->render(true);
+				glMultMatrixf(glm::value_ptr(l_forearm_cf));
+				forearm->render(true);
 				sphere.render();
 				glTranslatef(0, 0, -8);
 				sphere.render();
@@ -256,22 +246,27 @@ void displayCallback (GLFWwindow *win)
 	/* render right arm */
 	glPushMatrix();
     {
-		//shoulders
 		glMultMatrixf(glm::value_ptr(frame_cf));
         glPushMatrix();
         {	
         	glTranslatef(0, 5, 0);
+			
 			//shoulder sphere
-			sphere.render();
-			glMultMatrixf(glm::value_ptr(swing_arm_cf));
+			glPushMatrix();{
+				glScalef(1.5, 1.5, 1.5);
+				sphere.render();
+			}
+			glPopMatrix();
+			
+			glMultMatrixf(glm::value_ptr(r_upperarm_cf));
             glTranslatef(0, 0, -4);
 			//upper arm
-            hip->render(false);
+            upperarm->render(false);
             //glPushMatrix();
             //{
                 glTranslatef(0, 0, 4);
-				glMultMatrixf(glm::value_ptr(shin_cf));
-				shin->render(true);
+				glMultMatrixf(glm::value_ptr(r_forearm_cf));
+				forearm->render(true);
 				sphere.render();
 				glTranslatef(0, 0, -8);
 				sphere.render();
@@ -284,34 +279,6 @@ void displayCallback (GLFWwindow *win)
 
 	/* to make smooth transition between frame */
     glfwSwapBuffers(win);
-}
-
-void myModelInit ()
-{
-    torso = new Cylinder();
-	torso -> build(4, 3.5, 10);
-	
-	sphere.build(15, 20);
-    spot = new Cylinder();
-    spot -> build(1 + tan(glm::radians(40.0f)), 1, 2);
-
-    hip = new Arm;
-    hip->build(false, 7);
-
-    shin = new Arm();
-    shin->build(true, 7);
-    shin_cf = glm::translate(glm::vec3{0.0f, 0.0f, -hip->length()});
-    shin_cf *= glm::rotate(glm::radians(30.0f), glm::vec3{0,1,0});
-
-    frame.build();
-    frame_cf = glm::translate(glm::vec3{0, 0 , 25});
-    active = &camera_cf;
-
-
-    light0_cf = glm::translate(glm::vec3{-25, 8, 26});
-
-    light1_cf = glm::translate(glm::vec3{0, -20, 36});
-    light1_cf = light1_cf * glm::rotate (glm::radians(-120.0f), glm::vec3{1,0,0});
 }
 
 void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods) {
@@ -347,6 +314,8 @@ void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods)
     }
     else {
         switch (key) {
+			case GLFW_KEY_W:
+				frame_cf *= glm::translate(glm::vec3(1.0f, 0.0f, 0.0f));
             case GLFW_KEY_ESCAPE:
                 exit(0);
             case GLFW_KEY_0:
@@ -384,6 +353,58 @@ void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods)
                 break;
         }
     }
+}
+
+void myGLInit ()
+{
+    glClearColor (1.0, 1.0, 1.0, 1.0); /* black background */
+
+    /* fill front-facing polygon */
+    glPolygonMode (GL_FRONT, GL_FILL);
+    /* draw outline of back-facing polygon */
+    glPolygonMode (GL_BACK, GL_LINE);
+
+    /* Enable depth test for hidden surface removal */
+    glEnable (GL_DEPTH_TEST);
+
+    /* enable back-face culling */
+    glEnable (GL_CULL_FACE);
+    //glCullFace (GL_BACK);
+
+    /* Enable shading */
+    glEnable (GL_LIGHTING);
+    glEnable (GL_NORMALIZE); /* Tell OpenGL to renormalize normal vector
+                              after transformation */
+    /* initialize two light sources */
+    glEnable (GL_LIGHT0);
+    glLightfv (GL_LIGHT0, GL_AMBIENT, light0_color);
+    glLightfv (GL_LIGHT0, GL_DIFFUSE, light0_color);
+    glLightfv (GL_LIGHT0, GL_SPECULAR, light0_color);
+    glEnable (GL_LIGHT1);
+    glLightfv (GL_LIGHT1, GL_AMBIENT, light1_color);
+    glLightfv (GL_LIGHT1, GL_DIFFUSE, light1_color);
+    glLightfv (GL_LIGHT1, GL_SPECULAR, light1_color);
+    glLightf (GL_LIGHT1, GL_SPOT_CUTOFF, 40);
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+}
+
+/*--------------------------------*
+ * GLUT Reshape callback function *
+ *--------------------------------*/
+void reshapeCallback (GLFWwindow *win, int w, int h)
+{
+    glViewport (0, 0, w, h);
+
+    /* switch to Projection matrix mode */
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+
+    gluPerspective (60, (float) w / (float) h, 5.0, 100.0);
+
+    /* switch back to Model View matrix mode */
+    glMatrixMode (GL_MODELVIEW);
+    camera_cf = glm::lookAt(glm::vec3(25,20,20), glm::vec3(0,0,10), glm::vec3(0,0,1));
 }
 
 int main (int argc, char **argv)
