@@ -384,7 +384,7 @@ void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods)
 				frame_cf *= glm::rotate(glm::radians(-3.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 				break;
             case GLFW_KEY_UP:
-				camera_cf *= glm::translate(glm::vec3(0, 0, 1));
+				camera_cf *= glm::translate(glm::vec3(1.0f, 0.0f, 0.0f));
                 break;
             case GLFW_KEY_DOWN:
 				camera_cf *= glm::translate(glm::vec3(-1.0f, 0.0f, 0.0f));
