@@ -60,7 +60,7 @@ void reshapeCallback (GLFWwindow *win, int w, int h)
 
     /* switch back to Model View matrix mode */
     glMatrixMode (GL_MODELVIEW);
-    camera_cf = glm::lookAt(glm::vec3(25,20,20), glm::vec3(0,0,10), glm::vec3(0,0,1));
+    camera_cf = glm::lookAt(glm::vec3(25,20,15), glm::vec3(0,0,15), glm::vec3(0,0,1));
 }
 
 /*================================================================*
@@ -310,7 +310,7 @@ void myModelInit ()
 
     light0_cf = glm::translate(glm::vec3{-25, 8, 26});
 
-    light1_cf = glm::translate(glm::vec3{0, -10, 18});
+    light1_cf = glm::translate(glm::vec3{0, -20, 36});
     light1_cf = light1_cf * glm::rotate (glm::radians(-120.0f), glm::vec3{1,0,0});
 }
 
