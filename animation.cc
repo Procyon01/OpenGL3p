@@ -48,7 +48,7 @@ bool is_anim_running = false;
 
 /* light source setting */
 GLfloat light0_color[] = {1.0, 1.0, 1.0, 1.0};   /* color */
-GLfloat light1_color[] = {1.0, 1.0, 0.6, 1.0};  /* color */
+GLfloat light1_color[] = {0.5, 0.0, 0.5, 1.0};  /* color */
 GLfloat black_color[] = {0.0, 0.0, 0.0, 1.0};   /* color */
 
 void myModelInit ()
@@ -76,11 +76,12 @@ void myModelInit ()
     frame_cf = glm::translate(glm::vec3{0, 0 , 25});
     active = &camera_cf;
 
+	//streetlamp = new 
 
-    light0_cf = glm::translate(glm::vec3{-25, 8, 26});
+    light0_cf = glm::translate(glm::vec3{-25, 8, 40});
 
-    light1_cf = glm::translate(glm::vec3{0, -10, 18});
-    light1_cf = light1_cf * glm::rotate (glm::radians(-120.0f), glm::vec3{1,0,0});
+    light1_cf = glm::translate(glm::vec3{0, 0, 0});
+   	light1_cf = light1_cf * glm::rotate (glm::radians(-180.0f), glm::vec3{1,0,0});
 }
 
 /*================================================================*
@@ -173,12 +174,6 @@ void displayCallback (GLFWwindow *win)
     /* place the light source in the scene. */
     glLightfv (GL_LIGHT0, GL_POSITION, glm::value_ptr(glm::column(light0_cf, 3)));
 
-    /* recall that the last column of a CF is the origin of the CF */
-    glLightfv (GL_LIGHT1, GL_POSITION, glm::value_ptr(glm::column(light1_cf, 3)));
-
-    /* we use the Z-axis of the light CF as the spotlight direction */
-    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, glm::value_ptr(glm::column(light1_cf, 2)));
-
     /* the curly bracket pairs below are only for readability */
     glPushMatrix();
     {
@@ -193,10 +188,10 @@ void displayCallback (GLFWwindow *win)
     glPopMatrix();
 
     /* render the spot light using its coordinate frame */
-    glPushMatrix();
-    glMultMatrixf(glm::value_ptr(light1_cf));
-    spot->render();
-    glPopMatrix();
+    //glPushMatrix();
+    //glMultMatrixf(glm::value_ptr(light1_cf));
+    //spot->render();
+    //glPopMatrix();
 
 
     /* The following nesting of push-pop pairs create an easy
@@ -211,7 +206,15 @@ void displayCallback (GLFWwindow *win)
 	glPushMatrix();
 	{
 		glMultMatrixf(glm::value_ptr(frame_cf));
-        frame.render();
+		glPushMatrix();
+		{
+			glTranslatef(0, 0, -9);
+    		glLightfv (GL_LIGHT1, GL_POSITION, glm::value_ptr(glm::column(light1_cf, 3)));
+    		glLightfv (GL_LIGHT1, GL_SPOT_DIRECTION, glm::value_ptr(glm::column(light1_cf, 2)));
+		}
+		glPopMatrix();
+
+		frame.render();
 		//drop in a head
 		glPushMatrix();
 		{
@@ -241,27 +244,28 @@ void displayCallback (GLFWwindow *win)
 	glPopMatrix();
 
 	//render left leg
+	//NOPE, rendering LEVITATION MEGADRIVE!
 	glPushMatrix();
 	{
 		glMultMatrixf(glm::value_ptr(frame_cf));
-		glTranslatef(0, -1.75, -11.5);
-		glScalef(2.0, 2.0, 2.0);
+		glTranslatef(0, 0, -11.5);
+		glScalef(3.0, 3.0, 3.0);
 		sphere.render();
-		glRotatef(180, 0, 0, 1);
+		//why on earth doesn't this work like it should??
 		//upperarm->render(false);
 	}
 	glPopMatrix();
 
-	//render right leg
+	/* render right leg
 	glPushMatrix();
 	{
 		glMultMatrixf(glm::value_ptr(frame_cf));
 		glTranslatef(0, 1.75, -11.5);
 		glScalef(2.0, 2.0, 2.0);
 		sphere.render();
-
 	}
 	glPopMatrix();
+	*/
 
 	/* render left arm */
 	glPushMatrix();
@@ -453,7 +457,7 @@ void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods)
 
 void myGLInit ()
 {
-    glClearColor (0.85, 0.85, 1.0, 1.0); /* black background */
+    glClearColor (0.1, 0.1, 0.2, 1.0); /*background color*/
 
     /* fill front-facing polygon */
     glPolygonMode (GL_FRONT, GL_FILL);
