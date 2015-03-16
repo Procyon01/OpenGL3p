@@ -13,7 +13,7 @@ void SwingFrame::render() const {
     glMaterialfv(GL_FRONT, GL_AMBIENT, COPPER_AMBIENT);
     glMaterialfv(GL_FRONT, GL_DIFFUSE, COPPER_DIFFUSE);
     glMaterialfv(GL_FRONT, GL_SPECULAR, COPPER_SPECULAR);
-    glMaterialf(GL_FRONT, GL_SHININESS, 76.800003);
+    glMaterialf(GL_FRONT, GL_SHININESS, 500.800003);
     glPushMatrix();
     glRotatef (90, 1, 0, 0);
     glScalef (1.75, 1.75, 10);
