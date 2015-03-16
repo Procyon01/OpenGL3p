@@ -232,6 +232,14 @@ void displayCallback (GLFWwindow *win)
 		//drop in a pelvis
 		torso -> render();	
 		
+		float COPPER_AMBIENT[] = {0.247250, 0.224500, 0.064500, 1.000000};
+    	float COPPER_DIFFUSE[] = {0.346150, 0.314300, 0.090300, 1.000000};
+    	float COPPER_SPECULAR[] = {0.797357, 0.723991, 0.208006, 1.000000};
+
+    	glMaterialfv(GL_FRONT, GL_AMBIENT, COPPER_AMBIENT);
+    	glMaterialfv(GL_FRONT, GL_DIFFUSE, COPPER_DIFFUSE);
+    	glMaterialfv(GL_FRONT, GL_SPECULAR, COPPER_SPECULAR);
+    	glMaterialf(GL_FRONT, GL_SHININESS, 83.199997);
 		//drop in a belt
 		glPushMatrix();
 		{
@@ -240,6 +248,7 @@ void displayCallback (GLFWwindow *win)
 			sphere.render();
 		}
 		glPopMatrix();
+		
 	}
 	glPopMatrix();
 
