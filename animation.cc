@@ -212,6 +212,7 @@ void displayCallback (GLFWwindow *win)
 	{
 		glMultMatrixf(glm::value_ptr(frame_cf));
         frame.render();
+		//drop in a head
 		glPushMatrix();
 		{
 			glScalef(2, 2, 2.5);
@@ -452,7 +453,7 @@ void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods)
 
 void myGLInit ()
 {
-    glClearColor (1.0, 1.0, 1.0, 1.0); /* black background */
+    glClearColor (0.85, 0.85, 1.0, 1.0); /* black background */
 
     /* fill front-facing polygon */
     glPolygonMode (GL_FRONT, GL_FILL);
