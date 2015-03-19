@@ -33,6 +33,7 @@ Cylinder* spot;
 Cylinder* torso;
 Sphere sphere;
 SwingFrame frame;
+int cf_mode = 2;
 
 int SPEED_MODE = 3;
 
@@ -187,21 +188,6 @@ void displayCallback (GLFWwindow *win)
     }
     glPopMatrix();
 
-    /* render the spot light using its coordinate frame */
-    //glPushMatrix();
-    //glMultMatrixf(glm::value_ptr(light1_cf));
-    //spot->render();
-    //glPopMatrix();
-
-
-    /* The following nesting of push-pop pairs create an easy
-     * way to render different object w.r.t other coordinate
-     * frame.
-     *
-     * The upperarm is rendered w.r.t the swing base frame
-     * The forearm is rendered w.r.t the swing arm frame
-     */
-
 	/* Begin body build */
 	glPushMatrix();
 	{
@@ -252,29 +238,15 @@ void displayCallback (GLFWwindow *win)
 	}
 	glPopMatrix();
 
-	//render left leg
-	//NOPE, rendering LEVITATION MEGADRIVE!
+	//render LEVITATION MEGADRIVE
 	glPushMatrix();
 	{
 		glMultMatrixf(glm::value_ptr(frame_cf));
 		glTranslatef(0, 0, -11.5);
 		glScalef(3.0, 3.0, 3.0);
 		sphere.render();
-		//why on earth doesn't this work like it should??
-		//upperarm->render(false);
 	}
 	glPopMatrix();
-
-	/* render right leg
-	glPushMatrix();
-	{
-		glMultMatrixf(glm::value_ptr(frame_cf));
-		glTranslatef(0, 1.75, -11.5);
-		glScalef(2.0, 2.0, 2.0);
-		sphere.render();
-	}
-	glPopMatrix();
-	*/
 
 	/* render left arm */
 	glPushMatrix();
@@ -363,33 +335,34 @@ void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods)
 
     if (mods == GLFW_MOD_SHIFT) {
         switch (key) {
-            case GLFW_KEY_UP: /* tilt */
-                *active *= glm::rotate(glm::radians(-3.0f), glm::vec3{1.0f, 0.0f, 0.0f});
+            case GLFW_KEY_UP: /* raise */
+				camera_cf *= glm::translate(glm::vec3(0.0f, 0.0f, -1.0f));
                 break;
             case GLFW_KEY_DOWN: /* tilt */
-                *active *= glm::rotate(glm::radians(+3.0f), glm::vec3{1.0f, 0.0f, 0.0f});
+				camera_cf *= glm::translate(glm::vec3(0.0f, 0.0f, 1.0f));
                 break;
             case GLFW_KEY_LEFT: /* pan left */
-                *active *= glm::rotate(glm::radians(-3.0f), glm::vec3{0.0f, 1.0f, 0.0f});
+				camera_cf *= glm::translate(glm::vec3(0.0f, 1.0f, 0.0f));
                 break;
             case GLFW_KEY_RIGHT: /* pan right */
-                *active *= glm::rotate(glm::radians(+3.0f), glm::vec3{0.0f, 1.0f, 0.0f});
+				camera_cf *= glm::translate(glm::vec3(0.0f, -1.0f, 0.0f));
                 break;
             case GLFW_KEY_W:
-                *active *= glm::translate(glm::vec3{1, 0, 0});
+                frame_cf *= glm::rotate(glm::radians(3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
                 break;
             case GLFW_KEY_S:
-                *active *= glm::translate(glm::vec3{-1, 0, 0});
+                frame_cf *= glm::rotate(glm::radians(-3.0f), glm::vec3(0.0f, 1.0f, 0.0f));
                 break;
-            case GLFW_KEY_Z:
-                *active *= glm::translate(glm::vec3{0, 0, 1});
+            case GLFW_KEY_A:
+                frame_cf *= glm::rotate(glm::radians(-3.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                break;
+            case GLFW_KEY_D:
+                frame_cf *= glm::rotate(glm::radians(3.0f), glm::vec3(1.0f, 0.0f, 0.0f));
                 break;
             default:
                 break;
         };
-
-    }
-    else {
+    } else {
         switch (key) {
 			case GLFW_KEY_W:
 				frame_cf *= glm::translate(glm::vec3(-SPEED_MODE/2, 0.0f, 0.0f));
@@ -427,15 +400,15 @@ void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods)
 			
 			case GLFW_KEY_ESCAPE:
                 exit(0);
-            case GLFW_KEY_0:
-                active = &light0_cf;
+          
+		  	case GLFW_KEY_0:
                 if (glIsEnabled(GL_LIGHT0))
                     glDisable(GL_LIGHT0);
                 else
                     glEnable(GL_LIGHT0);
                 break;
-            case GLFW_KEY_1:
-                active = &light1_cf;
+          
+		  	case GLFW_KEY_1:
                 if (glIsEnabled(GL_LIGHT1))
                     glDisable(GL_LIGHT1);
                 else
@@ -444,22 +417,26 @@ void keyCallback (GLFWwindow *win, int key, int scan_code, int action, int mods)
 
             case GLFW_KEY_SPACE: /* pause the animation */
                 is_anim_running ^= true;
-                break;
-            case GLFW_KEY_C:
-                active = &camera_cf;
-                break;
-            case GLFW_KEY_F:
-                active = &frame_cf;
-                break;
-            case GLFW_KEY_X:
-                *active *= glm::translate(glm::vec3{-1, 0, 0});
-                break;
-            case GLFW_KEY_Y:
-                *active *= glm::translate(glm::vec3{0, -1, 0});
-                break;
-            case GLFW_KEY_Z:
-                *active *= glm::translate(glm::vec3{0, 0, -1});
-                break;
+                
+				break;
+
+          /* Transition between CF modes */
+		   	
+			case GLFW_KEY_TAB:
+				switch (cf_mode) {
+                	case 1:
+						active = &camera_cf;
+						cf_mode = 2;
+						break;
+					case 2:
+						active = &frame_cf;
+						cf_mode = 3;
+						break;
+					case 3:
+						active = &light1_cf;
+						cf_mode = 1;
+						break;
+				};
         }
     }
 }
@@ -484,6 +461,7 @@ void myGLInit ()
     glEnable (GL_LIGHTING);
     glEnable (GL_NORMALIZE); /* Tell OpenGL to renormalize normal vector
                               after transformation */
+
     /* initialize two light sources */
     glEnable (GL_LIGHT0);
     glLightfv (GL_LIGHT0, GL_AMBIENT, light0_color);

@@ -32,7 +32,6 @@ void Arm::build(bool extrem, int len)
 void Arm::render(bool extrem) const
 {
     glPushMatrix();
-    glPushMatrix();
 	if (extrem){
 		glTranslatef(0, 0, -4);
 	}

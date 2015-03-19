@@ -10,7 +10,7 @@ void Sphere::build (int latRings, int lonRings) {
 
     /* build a UNIT sphere */
 
-    float dLat = M_PI / latRings;
+    float dLat = M_PI * 2 / latRings;
     float dLon = 2 * M_PI / lonRings;
     float ang = dLat;
     int vnum = 0;
